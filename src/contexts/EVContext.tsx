@@ -201,7 +201,14 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const speak = (message: string) => {
-    if (voiceAssistantActive) {
+    if (voiceAssistantActive && 'speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      utterance.lang = 'en-IN';
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
       console.log('🎤 Voice Assistant:', message);
     }
   };

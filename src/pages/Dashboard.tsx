@@ -67,7 +67,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <VoiceAssistant message={tip} autoHide={false} />
+      <VoiceAssistant message={tip} autoHide={true} />
       
       {/* Header */}
       <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
@@ -220,7 +220,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           <Button
             onClick={() => navigate('/map')}
             className="h-24 flex flex-col items-center justify-center gap-2"
@@ -244,6 +244,25 @@ const Dashboard = () => {
           >
             <History className="w-6 h-6" />
             <span className="text-xs">History</span>
+          </Button>
+          <Button
+            onClick={() => navigate('/services')}
+            className="h-24 flex flex-col items-center justify-center gap-2"
+            variant="outline"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-6 h-6"
+            >
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
+            <span className="text-xs">Services</span>
           </Button>
         </div>
 

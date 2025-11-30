@@ -78,7 +78,7 @@ const Map = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <VoiceAssistant message={voiceMessage} autoHide={false} />
+      <VoiceAssistant message={voiceMessage} autoHide={true} />
       
       {/* Header */}
       <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
