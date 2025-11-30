@@ -11,7 +11,9 @@ import Stations from "./pages/Stations";
 import Notifications from "./pages/Notifications";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
+import Services from "./pages/Services";
 import NotFound from "./pages/NotFound";
+import { SiriAssistant } from "./components/SiriAssistant";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +24,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <SiriAssistant />
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -30,6 +33,7 @@ const App = () => (
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/services" element={<Services />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
