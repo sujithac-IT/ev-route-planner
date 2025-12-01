@@ -12,6 +12,7 @@ import Notifications from "./pages/Notifications";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Services from "./pages/Services";
+import SafetyCompanion from "./pages/SafetyCompanion";
 import NotFound from "./pages/NotFound";
 import { SiriAssistant } from "./components/SiriAssistant";
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/safety-companion" element={<SafetyCompanion />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
