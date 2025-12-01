@@ -18,6 +18,7 @@ import {
 import { useEV } from '@/contexts/EVContext';
 import { VoiceAssistant } from '@/components/VoiceAssistant';
 import { VoiceToggle } from '@/components/VoiceAssistant';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ const Dashboard = () => {
   const [ecoRange, setEcoRange] = useState(0);
   const [normalRange, setNormalRange] = useState(0);
   const [sportRange, setSportRange] = useState(0);
+  const [chargingSpeed, setChargingSpeed] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     const tips = [
@@ -41,6 +44,28 @@ const Dashboard = () => {
     setNormalRange(batteryData.dte);
     setSportRange(Math.round(batteryData.dte * 0.75));
   }, [batteryData.dte]);
+
+  // Simulate charging speed when vehicle is charging
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const isCharging = Math.random() > 0.7;
+      if (isCharging) {
+        setChargingSpeed(Math.random() * 50 + 10); // 10-60 kW
+      } else {
+        setChargingSpeed(0);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSOS = () => {
+    speak('Emergency SOS activated. Contacting nearest service center and emergency contacts.');
+    toast({
+      title: 'SOS Activated',
+      description: 'Emergency services have been notified. Help is on the way!',
+      variant: 'destructive',
+    });
+  };
 
   const getBatteryColor = () => {
     if (batteryData.soc > 60) return 'text-battery-full';
@@ -76,7 +101,18 @@ const Dashboard = () => {
             <h1 className="text-2xl font-tech font-bold">Dashboard</h1>
             <p className="text-sm text-muted-foreground">Real-time vehicle monitoring</p>
           </div>
-          <VoiceToggle />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={handleSOS}
+              className="animate-pulse"
+              title="Emergency SOS"
+            >
+              <AlertTriangle className="w-5 h-5" />
+            </Button>
+            <VoiceToggle />
+          </div>
         </div>
       </div>
 
@@ -147,6 +183,20 @@ const Dashboard = () => {
                 <div className="text-xs text-muted-foreground">DTE (km)</div>
               </div>
             </div>
+
+            {chargingSpeed > 0 && (
+              <div className="mt-4 p-3 bg-success/10 border border-success/30 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-success animate-pulse" />
+                    Charging Speed
+                  </span>
+                  <span className="font-tech font-bold text-success">
+                    {chargingSpeed.toFixed(1)} kW
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="mt-4 text-center">
               <p className="text-xs text-muted-foreground">Last Sync: Just now</p>
