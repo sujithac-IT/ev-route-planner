@@ -15,6 +15,8 @@ import {
   Car,
   LogOut,
   Shield,
+  Phone,
+  AlertCircle,
 } from 'lucide-react';
 import { useEV } from '@/contexts/EVContext';
 import { useState } from 'react';
@@ -265,6 +267,53 @@ const Settings = () => {
               <span className="text-sm text-muted-foreground">Connector Type</span>
               <span className="font-medium">CCS2</span>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Warranty & Charging Impact */}
+        <Card className="border-2 bg-gradient-to-br from-warning/10 to-warning/5">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-warning" />
+              Warranty Impact
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <span className="text-sm text-muted-foreground">Fast Charging Usage</span>
+              <span className="font-tech font-bold text-warning">47%</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <span className="text-sm text-muted-foreground">Battery Health Impact</span>
+              <span className="font-medium text-sm text-success">Low</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Frequent fast charging (3+ times/week) may reduce battery warranty coverage. Current usage is within optimal range.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Customer Service */}
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Phone className="w-5 h-5 text-accent" />
+              Customer Service
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" className="w-full justify-start">
+              <Phone className="w-4 h-4 mr-2" />
+              Call Support: 1800-XXX-XXXX
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Phone className="w-4 h-4 mr-2" />
+              Emergency Roadside: 1800-YYY-YYYY
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Shield className="w-4 h-4 mr-2" />
+              Service Centers Near Me
+            </Button>
           </CardContent>
         </Card>
 

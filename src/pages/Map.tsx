@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
   MapPin, 
   Navigation, 
@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   Zap,
   Battery,
+  AlertTriangle,
 } from 'lucide-react';
 import { useEV } from '@/contexts/EVContext';
 import { VoiceAssistant } from '@/components/VoiceAssistant';
@@ -23,6 +24,8 @@ const Map = () => {
   const [voiceMessage, setVoiceMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [showRouteWarning, setShowRouteWarning] = useState(false);
+  const [routeWarning, setRouteWarning] = useState('');
   const { toast } = useToast();
 
   const filteredStations = stations.filter(s => 
@@ -64,10 +67,22 @@ const Map = () => {
   const handleNavigate = (stationId: string) => {
     const station = stations.find(s => s.id === stationId);
     if (station) {
-      setVoiceMessage(
-        `Navigate to ${station.name}. Turn right in 500 meters, then continue straight for ${station.distance} kilometers. You will arrive in approximately ${Math.round(station.distance * 3)} minutes.`
-      );
-      speak(`Navigating to ${station.name}. Distance: ${station.distance} kilometers.`);
+      // Check for safe route warnings
+      const isSafeRoute = Math.random() > 0.3; // 70% routes are safe
+      
+      if (!isSafeRoute) {
+        const warningMsg = `Warning: This route includes roads with limited EV charging infrastructure. Alternative route recommended for safety.`;
+        setRouteWarning(warningMsg);
+        setShowRouteWarning(true);
+        speak(warningMsg);
+        setTimeout(() => setShowRouteWarning(false), 5000);
+      }
+      
+      const estimatedTime = Math.round(station.distance * 3);
+      const message = `Starting navigation to ${station.name}. Distance: ${station.distance} kilometers. Estimated arrival time: ${estimatedTime} minutes. ${!isSafeRoute ? 'Please exercise caution on this route.' : 'Route is EV safe with multiple charging options available.'}`;
+      
+      setVoiceMessage(message);
+      speak(message);
       
       toast({
         title: 'Navigation Started',
@@ -78,6 +93,18 @@ const Map = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* Route Warning */}
+      {showRouteWarning && (
+        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 max-w-sm w-full px-4">
+          <Card className="border-2 border-warning bg-warning/10 backdrop-blur-lg">
+            <CardContent className="p-4 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-foreground">{routeWarning}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <VoiceAssistant message={voiceMessage} autoHide={true} />
       
       {/* Header */}
