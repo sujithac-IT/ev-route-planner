@@ -14,6 +14,14 @@ import {
   Clock,
   AlertTriangle,
   Leaf,
+  Cloud,
+  CloudRain,
+  Sun,
+  Wind,
+  Phone,
+  Shield,
+  Navigation,
+  FileText,
 } from 'lucide-react';
 import { useEV } from '@/contexts/EVContext';
 import { VoiceAssistant } from '@/components/VoiceAssistant';
@@ -28,6 +36,8 @@ const Dashboard = () => {
   const [normalRange, setNormalRange] = useState(0);
   const [sportRange, setSportRange] = useState(0);
   const [chargingSpeed, setChargingSpeed] = useState(0);
+  const [weather, setWeather] = useState({ condition: 'Clear', temp: 28, icon: 'Sun' });
+  const [gridAlert, setGridAlert] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,6 +67,39 @@ const Dashboard = () => {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Simulate weather updates and range impact
+  useEffect(() => {
+    const weatherConditions = [
+      { condition: 'Clear', temp: 28, icon: 'Sun', rangeImpact: 0 },
+      { condition: 'Rainy', temp: 24, icon: 'CloudRain', rangeImpact: -15 },
+      { condition: 'Hot', temp: 38, icon: 'Sun', rangeImpact: -10 },
+      { condition: 'Windy', temp: 26, icon: 'Wind', rangeImpact: -5 },
+    ];
+    const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+    setWeather(randomWeather);
+
+    if (randomWeather.rangeImpact < 0) {
+      speak(`Weather alert: ${randomWeather.condition} conditions may reduce range by ${Math.abs(randomWeather.rangeImpact)} percent.`);
+    }
+  }, []);
+
+  // Simulate grid-based smart charging alerts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const isOffPeak = new Date().getHours() >= 22 || new Date().getHours() <= 6;
+      if (isOffPeak && batteryData.soc < 80) {
+        setGridAlert(true);
+        speak('Smart charging alert: Grid load is low. This is an optimal time for charging with lower rates.');
+        toast({
+          title: 'Smart Charging Alert',
+          description: 'Off-peak hours detected. Save up to 40% on charging costs!',
+        });
+        setTimeout(() => setGridAlert(false), 10000);
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [batteryData.soc]);
 
   const handleSOS = () => {
     speak('Emergency SOS activated. Contacting nearest service center and emergency contacts.');
@@ -237,6 +280,55 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Weather Impact */}
+        <Card className="border-2 bg-gradient-to-br from-accent/10 to-accent/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              {weather.icon === 'Sun' && <Sun className="w-5 h-5 text-warning" />}
+              {weather.icon === 'CloudRain' && <CloudRain className="w-5 h-5 text-primary" />}
+              {weather.icon === 'Wind' && <Wind className="w-5 h-5 text-accent" />}
+              Weather Impact
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+              <div className="flex items-center gap-2">
+                <Thermometer className="w-4 h-4" />
+                <span className="text-sm font-medium">Temperature</span>
+              </div>
+              <span className="font-tech font-bold">{weather.temp}°C</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+              <div className="flex items-center gap-2">
+                <Cloud className="w-4 h-4" />
+                <span className="text-sm font-medium">Condition</span>
+              </div>
+              <span className="font-medium">{weather.condition}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {weather.condition === 'Clear' ? 'Optimal conditions for maximum range' : 
+               `${weather.condition} conditions may impact range. Plan charging accordingly.`}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Smart Charging Alert */}
+        {gridAlert && (
+          <Card className="border-2 border-accent bg-accent/10 animate-pulse">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <Zap className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-accent">Smart Charging Alert</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Off-peak hours detected. Grid load is low - save up to 40% on charging costs!
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Charging Time Estimates */}
         <Card className="border-2">
           <CardHeader className="pb-3">
@@ -270,50 +362,103 @@ const Dashboard = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-4 gap-3">
-          <Button
-            onClick={() => navigate('/map')}
-            className="h-24 flex flex-col items-center justify-center gap-2"
-            variant="outline"
-          >
-            <MapPin className="w-6 h-6" />
-            <span className="text-xs">GPS Map</span>
-          </Button>
-          <Button
-            onClick={() => navigate('/stations')}
-            className="h-24 flex flex-col items-center justify-center gap-2"
-            variant="outline"
-          >
-            <Zap className="w-6 h-6" />
-            <span className="text-xs">Stations</span>
-          </Button>
-          <Button
-            onClick={() => navigate('/history')}
-            className="h-24 flex flex-col items-center justify-center gap-2"
-            variant="outline"
-          >
-            <History className="w-6 h-6" />
-            <span className="text-xs">History</span>
-          </Button>
-          <Button
-            onClick={() => navigate('/services')}
-            className="h-24 flex flex-col items-center justify-center gap-2"
-            variant="outline"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-6 h-6"
+        <div>
+          <h3 className="font-tech font-bold mb-3">Quick Access</h3>
+          <div className="grid grid-cols-4 gap-3">
+            <Button
+              onClick={() => navigate('/map')}
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              variant="outline"
             >
-              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-            </svg>
-            <span className="text-xs">Services</span>
-          </Button>
+              <MapPin className="w-6 h-6" />
+              <span className="text-xs">GPS Map</span>
+            </Button>
+            <Button
+              onClick={() => navigate('/stations')}
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              variant="outline"
+            >
+              <Zap className="w-6 h-6" />
+              <span className="text-xs">Stations</span>
+            </Button>
+            <Button
+              onClick={() => navigate('/history')}
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              variant="outline"
+            >
+              <History className="w-6 h-6" />
+              <span className="text-xs">History</span>
+            </Button>
+            <Button
+              onClick={() => navigate('/services')}
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              variant="outline"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-6 h-6"
+              >
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+              </svg>
+              <span className="text-xs">Services</span>
+            </Button>
+            <Button
+              onClick={() => navigate('/safety-companion')}
+              className="h-24 flex flex-col items-center justify-center gap-2 border-2 border-primary"
+              variant="outline"
+            >
+              <Shield className="w-6 h-6 text-primary" />
+              <span className="text-xs">Safety</span>
+            </Button>
+            <Button
+              onClick={() => {
+                toast({
+                  title: 'Customer Service',
+                  description: 'Call: 1800-XXX-XXXX or Emergency: 1800-YYY-YYYY',
+                });
+                speak('Customer service hotline: 1800-XXX-XXXX. Emergency roadside assistance: 1800-YYY-YYYY');
+              }}
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              variant="outline"
+            >
+              <Phone className="w-6 h-6 text-accent" />
+              <span className="text-xs">Support</span>
+            </Button>
+            <Button
+              onClick={() => {
+                navigate('/map');
+                toast({
+                  title: 'Safe Routes',
+                  description: 'Showing EV-safe routes with charging infrastructure',
+                });
+              }}
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              variant="outline"
+            >
+              <Navigation className="w-6 h-6 text-success" />
+              <span className="text-xs">Safe Routes</span>
+            </Button>
+            <Button
+              onClick={() => {
+                toast({
+                  title: 'Warranty Info',
+                  description: 'Battery warranty valid until 2028. Fast charging usage: 47%',
+                });
+                speak('Battery warranty is valid until 2028. Your current fast charging usage is 47 percent, which is within optimal range.');
+              }}
+              className="h-24 flex flex-col items-center justify-center gap-2"
+              variant="outline"
+            >
+              <FileText className="w-6 h-6 text-warning" />
+              <span className="text-xs">Warranty</span>
+            </Button>
+          </div>
         </div>
 
         {/* Warning for Low Battery */}
