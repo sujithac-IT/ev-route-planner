@@ -27,6 +27,20 @@ interface User {
   vehicleId: string;
 }
 
+interface VoiceSettings {
+  voiceIndex: number;
+  rate: number;
+  pitch: number;
+  volume: number;
+  language: string;
+}
+
+interface VoiceInfo {
+  name: string;
+  lang: string;
+  voice: SpeechSynthesisVoice;
+}
+
 interface EVContextType {
   user: User | null;
   setUser: (user: User | null) => void;
@@ -42,6 +56,9 @@ interface EVContextType {
   speak: (message: string) => void;
   searchRadius: number;
   setSearchRadius: (radius: number) => void;
+  voiceSettings: VoiceSettings;
+  setVoiceSettings: (settings: VoiceSettings) => void;
+  availableVoices: VoiceInfo[];
 }
 
 const EVContext = createContext<EVContextType | undefined>(undefined);
@@ -119,7 +136,15 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [voiceAssistantActive, setVoiceAssistantActive] = useState(true);
   const [searchRadius, setSearchRadius] = useState(5);
-  
+  const [availableVoices, setAvailableVoices] = useState<VoiceInfo[]>([]);
+  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
+    voiceIndex: 0,
+    rate: 0.9,
+    pitch: 1,
+    volume: 1,
+    language: 'en-IN',
+  });
+
   const [batteryData, setBatteryData] = useState<BatteryData>({
     soc: 78,
     soh: 94,
@@ -131,6 +156,39 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState([
     { id: '1', type: 'info', message: 'Welcome to EV Sense!', time: 'Just now' },
   ]);
+
+  // Load available voices
+  useEffect(() => {
+    const loadVoices = () => {
+      if ('speechSynthesis' in window) {
+        const voices = window.speechSynthesis.getVoices();
+        const voiceInfos: VoiceInfo[] = voices.map((voice) => ({
+          name: voice.name,
+          lang: voice.lang,
+          voice,
+        }));
+        setAvailableVoices(voiceInfos);
+
+        // Set default voice index if available
+        if (voiceInfos.length > 0) {
+          setVoiceSettings(prev => ({ ...prev, voiceIndex: 0 }));
+        }
+      }
+    };
+
+    loadVoices();
+
+    // Listen for voice list changes
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -147,7 +205,7 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         const newSoc = Math.max(10, prev.soc - Math.random() * 0.5);
         const newTemp = 30 + Math.random() * 10;
         const newDte = Math.round(newSoc * 3.2);
-        
+
         let status: 'Normal' | 'Low Battery' | 'Overheating' = 'Normal';
         if (newSoc < 20) status = 'Low Battery';
         if (newTemp > 45) status = 'Overheating';
@@ -172,7 +230,7 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         type: 'warning',
         message: `Low Battery Alert: SOC at ${Math.round(batteryData.soc)}%`,
       });
-      
+
       if (voiceAssistantActive) {
         const nearestStation = mockStations[0];
         speak(`Warning: Low battery at ${Math.round(batteryData.soc)}%. The closest charger is ${nearestStation.name} at ${nearestStation.distance} kilometers.`);
@@ -203,10 +261,18 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const speak = (message: string) => {
     if (voiceAssistantActive && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(message);
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      utterance.lang = 'en-IN';
+
+      // Apply voice settings
+      utterance.rate = voiceSettings.rate;
+      utterance.pitch = voiceSettings.pitch;
+      utterance.volume = voiceSettings.volume;
+      utterance.lang = voiceSettings.language;
+
+      // Set voice if available
+      if (availableVoices.length > 0 && voiceSettings.voiceIndex < availableVoices.length) {
+        utterance.voice = availableVoices[voiceSettings.voiceIndex].voice;
+      }
+
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
       console.log('🎤 Voice Assistant:', message);
@@ -230,6 +296,9 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         speak,
         searchRadius,
         setSearchRadius,
+        voiceSettings,
+        setVoiceSettings,
+        availableVoices,
       }}
     >
       {children}
