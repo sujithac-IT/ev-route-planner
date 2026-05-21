@@ -33,12 +33,14 @@ interface VoiceSettings {
   pitch: number;
   volume: number;
   language: string;
+  genderFilter: 'all' | 'female' | 'male';
 }
 
 interface VoiceInfo {
   name: string;
   lang: string;
   voice: SpeechSynthesisVoice;
+  gender?: string;
 }
 
 interface EVContextType {
@@ -59,6 +61,8 @@ interface EVContextType {
   voiceSettings: VoiceSettings;
   setVoiceSettings: (settings: VoiceSettings) => void;
   availableVoices: VoiceInfo[];
+  appLanguage: string;
+  setAppLanguage: (language: string) => void;
 }
 
 const EVContext = createContext<EVContextType | undefined>(undefined);
@@ -131,18 +135,35 @@ const mockStations: EVStation[] = [
   },
 ];
 
+// Detect voice gender from voice name
+const detectVoiceGender = (voiceName: string): string => {
+  const lowerName = voiceName.toLowerCase();
+  const femaleIndicators = ['female', 'woman', 'samantha', 'victoria', 'karen', 'moira', 'zira', 'siri', 'asha', 'heera', 'anjali', 'neha'];
+  const maleIndicators = ['male', 'man', 'alex', 'bruce', 'fred', 'ralph', 'rishi', 'arjun', 'raj', 'amit'];
+  
+  if (femaleIndicators.some(indicator => lowerName.includes(indicator))) {
+    return 'female';
+  }
+  if (maleIndicators.some(indicator => lowerName.includes(indicator))) {
+    return 'male';
+  }
+  return 'unknown';
+};
+
 export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [voiceAssistantActive, setVoiceAssistantActive] = useState(true);
   const [searchRadius, setSearchRadius] = useState(5);
   const [availableVoices, setAvailableVoices] = useState<VoiceInfo[]>([]);
+  const [appLanguage, setAppLanguage] = useState('en-IN');
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
     voiceIndex: 0,
     rate: 0.9,
     pitch: 1,
     volume: 1,
     language: 'en-IN',
+    genderFilter: 'female',
   });
 
   const [batteryData, setBatteryData] = useState<BatteryData>({
@@ -157,16 +178,27 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     { id: '1', type: 'info', message: 'Welcome to EV Sense!', time: 'Just now' },
   ]);
 
-  // Load available voices
+  // Load available voices and filter by gender
   useEffect(() => {
     const loadVoices = () => {
       if ('speechSynthesis' in window) {
         const voices = window.speechSynthesis.getVoices();
-        const voiceInfos: VoiceInfo[] = voices.map((voice) => ({
-          name: voice.name,
-          lang: voice.lang,
-          voice,
-        }));
+        const voiceInfos: VoiceInfo[] = voices
+          .map((voice) => ({
+            name: voice.name,
+            lang: voice.lang,
+            voice,
+            gender: detectVoiceGender(voice.name),
+          }))
+          .filter((voiceInfo) => {
+            // Filter for female voices by default
+            if (voiceSettings.genderFilter === 'female') {
+              return voiceInfo.gender === 'female';
+            } else if (voiceSettings.genderFilter === 'male') {
+              return voiceInfo.gender === 'male';
+            }
+            return true; // Show all voices
+          });
         setAvailableVoices(voiceInfos);
 
         // Set default voice index if available
@@ -188,7 +220,7 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         window.speechSynthesis.onvoiceschanged = null;
       }
     };
-  }, []);
+  }, [voiceSettings.genderFilter]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -299,6 +331,8 @@ export const EVProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         voiceSettings,
         setVoiceSettings,
         availableVoices,
+        appLanguage,
+        setAppLanguage,
       }}
     >
       {children}
